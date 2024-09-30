@@ -17,21 +17,33 @@ enum Commands {
     Rm { key: String },
 }
 
-fn main() {
+fn main() -> Result<()> {
     let args = Args::parse();
     match args.cmd {
         Commands::Get { key } => {
-            eprintln!("unimplemented!");
-            exit(1);
+            let mut store = KvStore::open(current_dir()?)?;
+            if let Some(value) = store.get(key.to_string())? {
+                println!("{}", value);
+            } else {
+                println!("Key not found!");
+            }
         }
         Commands::Set { key, value } => {
-            eprintln!("unimplemented!");
-            exit(1);
+            let mut store = KvStore::open(current_dir()?)?;
+            store.set(key.to_string(), value.to_string())?;
         }
         Commands::Rm { key } => {
-            eprintln!("unimplemented!");
-            exit(1);
+            let mut store = KvStore::open(current_dir()?)?;
+            match store.remove(key.to_string()) {
+                Ok(()) => {}
+                Err(KvsError::KeyNotFound) => {
+                    println!("Key not found");
+                    exit(1)
+                }
+                Err(e) => return Err(e),
+            }
         }
         _ => unreachable!(),
     }
+    Ok(())
 }
